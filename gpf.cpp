@@ -326,11 +326,8 @@ void pf::particleFilterUpdate(
     // x'(t) =  x(t-1) (+) ut , where (+) is the pose compounding
     // operator which is simply the motion model
 
-    pmodel(xk[i], xk[i], (void*)this->r);   // xk ~ P(xk | xkm1): Hypothesis - State Transition Model
-    omodel(zk[i], xk[i], (void*)this->r);   // zk ~ P(zk | xk): Observation Model
 
     // update the weights based on likelihood function
-    w[i] = w[i] * likelihood(z, zk[i], (void*)this->r); // P(zk, xk) for a given xk
       
 
     sum_wt += w[i];         // Total weight
