@@ -6,7 +6,7 @@
 
 QT       += core gui network sql
 
-CONFIG += static
+CONFIG += static c++11
 
 QMAKE_LFLAGS += -static -static-libgcc
 LIBS += -static-libgcc
