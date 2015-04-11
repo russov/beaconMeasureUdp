@@ -30,16 +30,11 @@ BeaconData::~BeaconData()
     map = NULL;
 }
 
-void BeaconData::calculateEverage()
-{
-    bd->calculateEverage();
-}
-
 void BeaconData::initSocket()
 {
     udpSocket = new QUdpSocket(this);
 
-    bool f = udpSocket->bind(12345);
+    udpSocket->bind(12345);
 
     connect(udpSocket, SIGNAL(readyRead()),
             this, SLOT(readPendingDatagrams()));
@@ -52,17 +47,15 @@ void BeaconData::processTheDatagram(const QByteArray &datagram)
     if (actualDataBeacons.find(getUniqNameBeacon(partsBeaconData)) == actualDataBeacons.end())
     {
         QList < TimeAndDataBeacon > startListBeaconData;
-        startListBeaconData.push_back(TimeAndDataBeacon(
-                                          QDateTime::fromString(partsBeaconData["time_create"]
-                                          , "dd-MM-yy HH-mm-ss-zzz"), partsBeaconData));
+        startListBeaconData.push_back(TimeAndDataBeacon(QDateTime::currentDateTime(), partsBeaconData));
         actualDataBeacons.insert(getUniqNameBeacon(partsBeaconData)
                 , startListBeaconData);
     } else
     {
         actualDataBeacons[getUniqNameBeacon(partsBeaconData)]
-                .push_back(TimeAndDataBeacon(
-                        QDateTime::fromString(partsBeaconData["time_create"]
-                        , "dd-MM-yy HH-mm-ss-zzz"), partsBeaconData));
+                .push_back(TimeAndDataBeacon(QDateTime::currentDateTime()
+                        /*QDateTime::fromString(partsBeaconData["time_create"]
+                        , "dd-MM-yy HH-mm-ss-zzz")*/, partsBeaconData));
     }
 }
 
@@ -78,7 +71,10 @@ QMap<QString, int> BeaconData::calculateAverageRssi()
             sumRssi += rssi.dataBeacon.value("rssi").toInt();
         }
 
-        beaconRssiAverage.insert(key, sumRssi/actualDataBeacons.value(key).count());
+        if (sumRssi)
+            beaconRssiAverage.insert(key, sumRssi/actualDataBeacons.value(key).count());
+        else
+            beaconRssiAverage.insert(key, 0);
     }
     return beaconRssiAverage;
 }
@@ -93,11 +89,37 @@ void BeaconData::deleteBeaconData(int capasityMs)
 {
     foreach (const QString& key, actualDataBeacons.keys())
     {
-        while (actualDataBeacons.value(key).last().time.toMSecsSinceEpoch()
-                - actualDataBeacons.value(key).first().time.toMSecsSinceEpoch() > capasityMs)
+    /*   int y = (actualDataBeacons.value(key).last().time.toMSecsSinceEpoch()
+                 - actualDataBeacons.value(key).first().time.toMSecsSinceEpoch());
+
+        int y2 = (QDateTime::currentDateTime().toMSecsSinceEpoch()
+                 - actualDataBeacons.value(key).first().time.toMSecsSinceEpoch());
+*/
+      /*  foreach (const TimeAndDataBeacon &arg, actualDataBeacons.value(key))
         {
-            actualDataBeacons[key].removeFirst();
+            if ((QDateTime::currentDateTime().toMSecsSinceEpoch()
+                    - arg.time.toMSecsSinceEpoch()) > capasityMs)
+            {
+                actualDataBeacons[key].removeFirst();
+            }
+        }*/
+        while(!actualDataBeacons.value(key).isEmpty())
+        {
+            int f = QDateTime::currentDateTime().toMSecsSinceEpoch()
+               - actualDataBeacons.value(key).first().time.toMSecsSinceEpoch();
+
+            if(( f > capasityMs))
+                actualDataBeacons[key].removeFirst();
+            else
+                break;
         }
+
+     /*   while (!actualDataBeacons.value(key).isEmpty()
+               && ( (y = (QDateTime::currentDateTime().toMSecsSinceEpoch()
+                - actualDataBeacons.value(key).first().time.toMSecsSinceEpoch())) > capasityMs) )
+        {
+           // actualDataBeacons[key].removeFirst();
+        }*/
     }
 }
 
@@ -125,7 +147,6 @@ void BeaconData::readPendingDatagrams()
 
 void BeaconData::onProcessTimer()
 {
-    deleteBeaconData(2000);
-
+    deleteBeaconData(1000);
     QMap<QString, int> beaconRssiAverage = calculateAverageRssi();
 }
