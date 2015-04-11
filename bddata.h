@@ -14,18 +14,13 @@ public:
     explicit BdData(QObject *parent = 0);
     ~BdData();
 
-    void insertBeaconData(const QString &data, bool saveData = false);
-    void calculateEverage();
-
 protected:
     QSqlDatabase dbase;
-    QStringList listBeaconData;
-    QTimer *timer;
 
 signals:
 
 public slots:
-    void onProcessTimer();
+
 };
 
 #endif // BDDATA_H

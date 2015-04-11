@@ -11,16 +11,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     data = new BeaconData(this);
-
-    connect(ui->everagePushButton, SIGNAL(clicked()), SLOT(onProcessEverageButton()));
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-}
-
-void MainWindow::onProcessEverageButton()
-{
-    data->calculateEverage();
 }

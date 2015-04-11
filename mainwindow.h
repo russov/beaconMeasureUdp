@@ -23,7 +23,7 @@ private:
     BeaconData *data;
 
 private slots:
-    void onProcessEverageButton();
+
 };
 
 #endif // MAINWINDOW_H
