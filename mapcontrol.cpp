@@ -4,12 +4,15 @@
 #include <QtGui/QPainter>
 
 #include <QtWidgets/QMenu>
+#include <QtWidgets/QComboBox>
 
 MapControl::MapControl(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::MapControl)
 {
     ui->setupUi(this);
+
+    bd = new BdData(this);
 
     connect (ui->imageLab, SIGNAL(customContextMenuRequested(QPoint)), SLOT(onContextMenu(QPoint)));
 
@@ -21,6 +24,9 @@ MapControl::MapControl(QWidget *parent) :
 
 MapControl::~MapControl()
 {
+    delete bd;
+    bd = NULL;
+
     delete ui;
 }
 
@@ -47,6 +53,41 @@ void MapControl::clearExtraPoints()
     drawPoints();
 }
 
+void MapControl::onCurrentIndexChanged(const QString &text)
+{
+    const QPixmap* map = ui->imageLab->pixmap();
+    QSize size = ui->imageLab->size();
+
+    double gy = (double)lastPoint.ry() / size.height();
+    double y = map->height() * gy;
+
+    double gx = (double)lastPoint.rx() / size.width();
+    double x = map->width() * gx;
+
+    QStringList textList = text.split(" ");
+
+    QString uuid = textList[0];
+    QString major = textList[1];
+    QString minor= textList[2];
+    QString name = textList[3];
+
+    bd->updateCoordinateBeacon(BdData::NameBeacon(uuid, major, minor, name), x, y);
+
+    /*
+    if (beaconPoints.isEmpty())
+        beaconPoints.insert(1, QPair <int, int> (x,y) );
+    else
+        beaconPoints.insert(beaconPoints.lastKey() + 1, QPair <int, int> (x,y));
+    */
+
+
+    drawPoints();
+
+
+    ((QComboBox *)sender())->close();
+    ((QComboBox *)sender())->deleteLater();
+}
+
 void MapControl::drawPoints()
 {
     QImage image("f:\\Projects\\Beacone\\ImprovedTriangulation\\Plan2.bmp");
@@ -56,9 +97,12 @@ void MapControl::drawPoints()
     painter.setPen( Qt::green );
     painter.setBrush( Qt::green );
 
-    foreach(const PointPair& arg, beaconPoints.values())
-        painter.drawEllipse(arg.first-25, arg.second-25, 50, 50);
+    foreach (const BdData::NameCoordinatesBeacon& var, bd->getBeaconsCoordinatesName())
+        painter.drawEllipse(var.x-25, var.y-25, 50, 50);
 
+   /* foreach(const PointPair& arg, beaconPoints.values())
+        painter.drawEllipse(arg.first-25, arg.second-25, 50, 50);
+*/
     painter.end();
 
     painter.begin(&image);
@@ -92,21 +136,16 @@ void MapControl::onContextMenu(const QPoint& point)
 
 void MapControl::onAddBeacon()
 {
-    const QPixmap* map = ui->imageLab->pixmap();
-    QSize size = ui->imageLab->size();
+    QComboBox *combobox = new QComboBox();
 
-    double gy = (double)lastPoint.ry() / size.height();
-    double y = map->height() * gy;
+    QList <BdData::NameBeacon> names = bd->getBeacons();
 
-    double gx = (double)lastPoint.rx() / size.width();
-    double x = map->width() * gx;
+    foreach (const BdData::NameBeacon & name, names)
+        combobox->addItem(name.uuid + " " + name.major + " " + name.minor + " " + name.name);
 
-    if (beaconPoints.isEmpty())
-        beaconPoints.insert(1, QPair <int, int> (x,y) );
-    else
-        beaconPoints.insert(beaconPoints.lastKey() + 1, QPair <int, int> (x,y));
+    connect(combobox, SIGNAL(currentIndexChanged(QString)), SLOT(onCurrentIndexChanged(QString)));
 
-    drawPoints();
+    combobox->show();
 }
 
 void MapControl::onMenuPixmap()

@@ -12,7 +12,7 @@ BeaconData::BeaconData(QObject *parent)
 {
     initSocket();
 
-    bd = new BdData(this);
+    //bd = new BdData(this);
     map = new MapControl();
     map->show();
 
@@ -23,8 +23,8 @@ BeaconData::BeaconData(QObject *parent)
 
 BeaconData::~BeaconData()
 {
-    delete bd;
-    bd = NULL;
+    //delete bd;
+   // bd = NULL;
 
     delete map;
     map = NULL;

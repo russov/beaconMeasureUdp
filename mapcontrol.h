@@ -5,6 +5,8 @@
 #include <QtCore/QMap>
 #include <QtCore/QPair>
 
+#include "bddata.h"
+
 namespace Ui {
 class MapControl;
 }
@@ -32,6 +34,8 @@ private:
 
     QPoint lastPoint;
 
+    BdData *bd;
+
 public slots:
     void onContextMenu(const QPoint &point);
     void onAddBeacon();
@@ -39,6 +43,8 @@ public slots:
 
     void fillExtraPoints();
     void clearExtraPoints();
+
+    void onCurrentIndexChanged(const QString& text);
 };
 
 #endif // MAPCONTROL_H

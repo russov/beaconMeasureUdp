@@ -14,8 +14,44 @@ public:
     explicit BdData(QObject *parent = 0);
     ~BdData();
 
+    struct NameBeacon
+    {
+        NameBeacon()
+        {}
+
+        NameBeacon(QString u, QString maj, QString min, QString n)
+            : uuid(u), major(maj), minor(min), name(n)
+        {}
+
+        QString uuid;
+        QString major;
+        QString minor;
+        QString name;
+    };
+
+    struct NameCoordinatesBeacon : public NameBeacon
+    {
+        NameCoordinatesBeacon()
+            : NameBeacon()
+        {}
+
+        NameCoordinatesBeacon(QString u, QString maj, QString min, QString n, int x1, int y1)
+            : NameBeacon(u, maj, min, n), x(x1), y(y1)
+        {}
+
+        int x;
+        int y;
+    };
+
+    QList < NameBeacon > getBeacons();
+    QList<NameCoordinatesBeacon> getBeaconsCoordinatesName();
+
+    void updateCoordinateBeacon(const NameBeacon &name, int x, int y);
+
 protected:
     QSqlDatabase dbase;
+
+
 
 signals:
 

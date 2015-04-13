@@ -51,3 +51,72 @@ BdData::~BdData()
 {
     dbase.close();
 }
+
+QList<BdData::NameBeacon> BdData::getBeacons()
+{
+    QList < BdData::NameBeacon > names;
+
+    QSqlQuery query(dbase);
+    QString request("select uuid, major, minor, name from tempbeacon ");
+
+    qDebug() << request;
+
+    query.exec(request);
+
+    while (query.next())
+    {
+        BdData::NameBeacon beacon;
+        beacon.uuid = query.value(0).toString();
+        beacon.major = query.value(1).toString();
+        beacon.minor = query.value(2).toString();
+        beacon.name = query.value(3).toString();
+
+        names.append(beacon);
+    }
+    return names;
+}
+
+QList<BdData::NameCoordinatesBeacon> BdData::getBeaconsCoordinatesName()
+{
+    QList < BdData::NameCoordinatesBeacon > names;
+
+    QSqlQuery query(dbase);
+    QString request("select uuid, major, minor, name, x, y from tempbeacon ");
+
+    qDebug() << request;
+
+    query.exec(request);
+
+    while (query.next())
+    {
+        BdData::NameCoordinatesBeacon beacon;
+        beacon.uuid = query.value(0).toString();
+        beacon.major = query.value(1).toString();
+        beacon.minor = query.value(2).toString();
+        beacon.name = query.value(3).toString();
+        beacon.x = query.value(4).toInt();
+        beacon.y = query.value(5).toInt();
+
+        names.append(beacon);
+    }
+    return names;
+}
+
+void BdData::updateCoordinateBeacon(const BdData::NameBeacon &name, int x, int y)
+{
+    QSqlQuery queryUpdate(dbase);
+    QString requestUpdate(QString("update TempBeacon "
+                                  "set X = %1, Y = %2 "
+                                  "where uuid = '%3' and major = '%4' and minor = '%5' and name = '%6' "
+                                  "" )
+                          .arg(x)
+                          .arg(y)
+                          .arg(name.uuid)
+                          .arg(name.major)
+                          .arg(name.minor)
+                          .arg(name.name));
+
+    qDebug() << requestUpdate;
+
+    queryUpdate.exec(requestUpdate);
+}

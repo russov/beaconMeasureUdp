@@ -34,7 +34,7 @@ protected:
     QUdpSocket *udpSocket;
     MapControl *map;
 
-    BdData *bd;
+    //BdData *bd;
     QTimer *timer;
 
     struct TimeAndDataBeacon
