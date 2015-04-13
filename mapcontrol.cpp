@@ -27,6 +27,7 @@ MapControl::~MapControl()
     delete bd;
     bd = NULL;
 
+
     delete ui;
 }
 
