@@ -24,6 +24,9 @@ public:
 
     void drawPoints();
 
+    void drawPoints(const std::vector<std::vector<double> > &Points, const std::vector<int> &size, const std::vector<Qt::GlobalColor> color);
+    void clear();
+
 private:
     Ui::MapControl *ui;
 
@@ -53,6 +56,7 @@ public slots:
     void clearExtraPoints();
 
     void onCurrentIndexChanged(const QString& text);
+
 };
 
 #endif // MAPCONTROL_H

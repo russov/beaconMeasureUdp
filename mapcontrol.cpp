@@ -115,24 +115,32 @@ void MapControl::drawPoints()
     foreach (const BdData::NameCoordinatesBeacon& var, bd->getBeaconsCoordinatesName())
         painter.drawEllipse(var.x-25, var.y-25, 50, 50);
 
-   /* foreach(const PointPair& arg, beaconPoints.values())
-        painter.drawEllipse(arg.first-25, arg.second-25, 50, 50);
-*/
-    painter.end();
-
-    painter.begin(&image);
-    painter.setPen( Qt::red );
-    painter.setBrush( Qt::red );
-
-    for (int i = 0; i < 200; ++i)
-
-            painter.drawEllipse(xd[i][0]-15, xd[i][1]-15, 30, 30);
-    //foreach(const PointPair& arg, extraPoints)
-      //  painter.drawEllipse(arg.first-15, arg.second-15, 30, 30);
-
     painter.end();
 
     ui->imageLab->setPixmap(QPixmap::fromImage(image));
+}
+
+void MapControl::drawPoints(const std::vector<std::vector<double> > &Points, const std::vector<int> &size, const std::vector<Qt::GlobalColor> color)
+{
+    drawPoints();
+
+    QPainter painter;
+    QImage image(ui->imageLab->pixmap()->toImage());
+
+    painter.begin(&image);
+    for (int i = 0; i < 200; ++i)
+    {
+        painter.setPen( color[i] );
+        painter.drawEllipse(Points[i][0]-size[i]/2, Points[i][1]-size[i]/2, size[i], size[i]);
+    }
+    painter.end();
+
+    ui->imageLab->setPixmap(QPixmap::fromImage(image));
+}
+
+void MapControl::clear()
+{
+    drawPoints();
 }
 
 void MapControl::onContextMenu(const QPoint& point)
