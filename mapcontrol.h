@@ -6,6 +6,7 @@
 #include <QtCore/QPair>
 
 #include "bddata.h"
+//#include "beacondata.h"
 
 namespace Ui {
 class MapControl;
@@ -19,6 +20,10 @@ public:
     explicit MapControl(QWidget *parent = 0);
     ~MapControl();
 
+    void setXD(const std::vector<std::vector<double> > &v);
+
+    void drawPoints();
+
 private:
     Ui::MapControl *ui;
 
@@ -28,13 +33,16 @@ private:
 
     QList <PointPair> extraPoints;
 
+    std::vector<std::vector<double> > xd;
+
     void setFileName();
 
-    void drawPoints();
+
 
     QPoint lastPoint;
 
     BdData *bd;
+  //  BeaconData *beaconData;
 
 public slots:
     void onContextMenu(const QPoint &point);

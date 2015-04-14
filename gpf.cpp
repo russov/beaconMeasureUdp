@@ -109,7 +109,7 @@ pf::pf(const pf &o)
 // Initializing Particle Filter
 void pf::initialize(uint k, double mean, double noise_sd)
 {
-  std::normal_distribution<double> distribution(0.0,noise_sd);
+  std::normal_distribution<double> distribution(0.0, noise_sd);
 
   itn_num = k;
   for(uint i = 0; i < Ns; ++i)

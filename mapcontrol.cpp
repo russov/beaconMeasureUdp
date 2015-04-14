@@ -12,7 +12,7 @@ MapControl::MapControl(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    bd = new BdData(this);
+   bd = new BdData(this);
 
     connect (ui->imageLab, SIGNAL(customContextMenuRequested(QPoint)), SLOT(onContextMenu(QPoint)));
 
@@ -20,6 +20,8 @@ MapControl::MapControl(QWidget *parent) :
 
     connect (ui->fillPushButton, SIGNAL(clicked()), SLOT(fillExtraPoints()));
     connect (ui->clearPushButton, SIGNAL(clicked()), SLOT(clearExtraPoints()));
+
+    //beaconData = new BeaconData();
 }
 
 MapControl::~MapControl()
@@ -27,8 +29,14 @@ MapControl::~MapControl()
     delete bd;
     bd = NULL;
 
+   // delete beaconData;
 
     delete ui;
+}
+
+void MapControl::setXD(const std::vector<std::vector<double> >& v)
+{
+    xd = v;
 }
 
 void MapControl::setFileName()
@@ -91,6 +99,12 @@ void MapControl::onCurrentIndexChanged(const QString &text)
 
 void MapControl::drawPoints()
 {
+    ui->imageLab->setContextMenuPolicy(Qt::CustomContextMenu);
+
+    ui->imageLab->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+
+    ui->imageLab->setScaledContents(true);
+
     QImage image("f:\\Projects\\Beacone\\ImprovedTriangulation\\Plan2.bmp");
 
     QPainter painter;
@@ -110,8 +124,11 @@ void MapControl::drawPoints()
     painter.setPen( Qt::red );
     painter.setBrush( Qt::red );
 
-    foreach(const PointPair& arg, extraPoints)
-        painter.drawEllipse(arg.first-15, arg.second-15, 30, 30);
+    for (int i = 0; i < 200; ++i)
+
+            painter.drawEllipse(xd[i][0]-15, xd[i][1]-15, 30, 30);
+    //foreach(const PointPair& arg, extraPoints)
+      //  painter.drawEllipse(arg.first-15, arg.second-15, 30, 30);
 
     painter.end();
 
@@ -141,10 +158,12 @@ void MapControl::onAddBeacon()
 
     QList <BdData::NameBeacon> names = bd->getBeacons();
 
+    combobox->addItem("1");
+
     foreach (const BdData::NameBeacon & name, names)
         combobox->addItem(name.uuid + " " + name.major + " " + name.minor + " " + name.name);
 
-    connect(combobox, SIGNAL(currentIndexChanged(QString)), SLOT(onCurrentIndexChanged(QString)));
+    connect(combobox, SIGNAL(currentTextChanged(QString)), SLOT(onCurrentIndexChanged(QString)));
 
     combobox->show();
 }

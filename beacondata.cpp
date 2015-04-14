@@ -19,6 +19,34 @@ BeaconData::BeaconData(QObject *parent)
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), SLOT(onProcessTimer()));
     timer->start(500);
+
+    ParticleFilter = new PF::pf(200, 2, 1, PF::WRSWR);
+
+    std::vector <double> wt;
+    std::vector < std::vector<double> > xd;
+
+    xd.resize(200, std::vector<double>(2));\
+
+    std::default_random_engine generator1, generator2;
+    std::uniform_real_distribution<double> distribution1(0.0, 1.0);
+    std::uniform_real_distribution<double> distribution2(0.0, 1.0);
+
+
+    for (int i=0; i<200; ++i)
+    {
+       double number = distribution1(generator1);
+       xd[i][0] = 127 + (1475-127)*number;
+
+       number = distribution1(generator1);
+       xd[i][1] = 173 + (1293-173)*number;
+
+       wt.push_back(1/200);
+    }
+
+    map->setXD(xd);
+    map->drawPoints();
+
+    ParticleFilter->initialize(1, wt, xd);
 }
 
 BeaconData::~BeaconData()
@@ -149,4 +177,10 @@ void BeaconData::onProcessTimer()
 {
     deleteBeaconData(1000);
     QMap<QString, int> beaconRssiAverage = calculateAverageRssi();
+
+
+    //ParticleFilter->
+
+
+
 }

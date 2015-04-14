@@ -13,6 +13,8 @@
 #include "mapcontrol.h"
 
 #include <bddata.h>
+#include "gpf.h"
+
 
 class BeaconData : public QObject
 {
@@ -36,6 +38,8 @@ protected:
 
     //BdData *bd;
     QTimer *timer;
+
+    PF::pf *ParticleFilter;
 
     struct TimeAndDataBeacon
     {
