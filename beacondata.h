@@ -54,11 +54,18 @@ protected:
 
     QMap <QString, QList <TimeAndDataBeacon> > actualDataBeacons;
 
+    std::vector <double> wt;
+    std::vector < std::vector<double> > xd;
+
 signals:
 
 public slots:
     void readPendingDatagrams();
     void onProcessTimer();
 };
+
+void process(std::vector<double> &xk, const std::vector<double> &xkm1, const std::vector<double> &step, void* data);
+void observation(std::vector<double> &zk, const std::vector<double> &xk, void* data);
+double likelihood(const std::vector<double> &z, const std::vector<double> &zhat, void* data);
 
 #endif // BEACONDATA_H

@@ -7,6 +7,29 @@
 #include <QtCore/QStringList>
 #include <QtCore/QTimer>
 
+class ConnectDB : public QObject
+{
+    Q_OBJECT
+public:
+    static QSqlDatabase getDBase()
+    {
+        QSqlDatabase dbase;
+        dbase = QSqlDatabase::addDatabase("QSQLITE");
+        dbase.setDatabaseName("../BeaconData");
+
+        if (!dbase.open())
+        {
+            //qDebug() << "BAD";
+        }
+        return dbase;
+    }
+
+    ~ConnectDB()
+    {
+        ConnectDB::getDBase().close();
+    }
+};
+
 class BdData : public QObject
 {
     Q_OBJECT
@@ -47,9 +70,10 @@ public:
     QList<NameCoordinatesBeacon> getBeaconsCoordinatesName();
 
     void updateCoordinateBeacon(const NameBeacon &name, int x, int y);
+    int getTxPowerBeacon(const QString& uuid, const QString& major, const QString& minor, const QString& name);
 
 protected:
-    QSqlDatabase dbase;
+    //QSqlDatabase dbase;
 
 
 

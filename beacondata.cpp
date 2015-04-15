@@ -7,6 +7,18 @@
 
 #include "gpf.h"
 
+QMap<QString, int> beaconRssiAverage;
+
+struct Beacon
+{
+    int x;
+    int y;
+    double P0;
+    double n;
+};
+
+QMap<QString, Beacon> beaconInitData;
+
 BeaconData::BeaconData(QObject *parent)
     : QObject(parent), udpSocket(NULL)
 {
@@ -22,16 +34,13 @@ BeaconData::BeaconData(QObject *parent)
 
     ParticleFilter = new PF::pf(200, 2, 1, PF::WRSWR);
 
-    std::vector <double> wt;
-    std::vector < std::vector<double> > xd;
-
     xd.resize(200, std::vector<double>(2));\
 
     std::default_random_engine generator1, generator2;
     std::uniform_real_distribution<double> distribution1(0.0, 1.0);
     std::uniform_real_distribution<double> distribution2(0.0, 1.0);
 
-    std::vector<int> size;
+    std::vector<double> size;
     std::vector<Qt::GlobalColor> color;
 
     for (int i=0; i<200; ++i)
@@ -39,10 +48,10 @@ BeaconData::BeaconData(QObject *parent)
        double number = distribution1(generator1);
        xd[i][0] = 127 + (1475-127)*number;
 
-       number = distribution1(generator1);
+       number = distribution2(generator1);
        xd[i][1] = 173 + (1293-173)*number;
 
-       wt.push_back(1/200);
+       wt.push_back(1/200.0);
 
        //!!!!
        size.push_back(30);
@@ -79,6 +88,27 @@ BeaconData::BeaconData(QObject *parent)
     //map->clear();
 
     ParticleFilter->initialize(1, wt, xd);
+
+
+    ////////
+
+    BdData *data = new BdData();
+
+    QList<BdData::NameCoordinatesBeacon> nameCoordinatesBeacon = data->getBeaconsCoordinatesName();
+
+
+
+    foreach (const BdData::NameCoordinatesBeacon &arg, nameCoordinatesBeacon)
+    {
+        Beacon beacon;
+        beacon.x = arg.x;
+        beacon.y = arg.y;
+        beacon.P0 = data->getTxPowerBeacon(arg.uuid, arg.major, arg.minor, arg.name);
+        beacon.n = 2;
+
+        beaconInitData.insert(arg.uuid + arg.major + arg.minor + arg.name, beacon);
+    }
+    delete data;
 }
 
 BeaconData::~BeaconData()
@@ -208,11 +238,78 @@ void BeaconData::readPendingDatagrams()
 void BeaconData::onProcessTimer()
 {
     deleteBeaconData(1000);
-    QMap<QString, int> beaconRssiAverage = calculateAverageRssi();
+    beaconRssiAverage = calculateAverageRssi();
+
+    std::vector<double> Step;
+    Step.push_back(0);
+    Step.push_back(0);
 
 
-    //ParticleFilter->
+    ParticleFilter->particleFilterUpdate(process,
+                                         observation,
+                                         likelihood,
+                                         Step,
+                                         Step,
+                                         round(200*0.60)
+                                        );
+    for(unsigned short i = 0; i < 200; ++i)
+    {
+
+        wt[i] = ParticleFilter->getParticleState(xd[i], xd[i], i)*500;
+    }
+    map->clear();
+    map->drawPoints(xd, wt);
+
+}
 
 
+//------------
 
+void process(std::vector<double> &xk, const std::vector<double> &xkm1, const std::vector<double> &step, void* data)
+{
+    static double StepInaccuracy = 10;  //Check
+    std::default_random_engine *generator = (std::default_random_engine *)data;
+    std::normal_distribution<double> distribution(0.0, StepInaccuracy);
+
+
+    for (unsigned short i=0; i<xk.size(); i++)
+    {
+        xk[i] = xkm1[i] + step[i] + distribution(*generator);
+    }
+}
+
+
+void observation(std::vector<double> &zk, const std::vector<double> &xk, void* data)
+{
+    double Likelihood = 0;
+    static const double Sigma_RSS = 7;
+    static const double Scale = 0.00867952522255192878338278931751;
+
+//    for(unsigned short i = 0; i<beaconRssiAverage.size(); ++i)
+//    {
+//        if(beaconRssiAverage.)
+//    }
+
+    foreach (const QString &name, beaconRssiAverage.keys())
+    {
+
+        double RSS = beaconRssiAverage[name];
+
+        if( (fabs(RSS) > 0) && (beaconInitData[name].x != 0))
+        {
+            double RSS_0 = beaconInitData[name].P0;
+            double n = beaconInitData[name].n;
+            double d = sqrt(pow(xk[0] - beaconInitData[name].x,2) + pow(xk[1] - beaconInitData[name].y,2))*Scale;
+
+            Likelihood += (exp(- pow((RSS - (RSS_0 - 10*n*log(d) ) ),2)/(2*Sigma_RSS*Sigma_RSS))/fabs(RSS));
+
+        }
+    }
+    zk[0] = Likelihood;
+
+}
+
+double likelihood(const std::vector<double> &z, const std::vector<double> &zhat, void* data)
+{
+  return zhat[0];
 }

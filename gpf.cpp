@@ -311,11 +311,12 @@ void pf::systematic_resampling()
 }
 //------------------------------------
 // Particle Filter Update 
-void pf::particleFilterUpdate( 
-    void (*pmodel)(std::vector<double> &x, const std::vector<double> &xprev, void *data),  // Process Model 
-    void (*omodel)(std::vector<double> &z, const std::vector<double> &x, void *data),  // Observation Model 
+void pf::particleFilterUpdate(void (*pmodel)(std::vector<double> &x, const std::vector<double> &xprev, const std::vector<double> &step, void* data),  // Process Model
+    void (*omodel)(std::vector<double> &z, const std::vector<double> &x,  void *data),  // Observation Model
     double(*likelihood)(const std::vector<double> &z, const std::vector<double> &zhat, void *data),
-    const std::vector<double> &z, uint resample_size)
+    const std::vector<double> &z,
+    const std::vector<double> &Step,
+    uint resample_size)
 {
   double sum_wt = 0.0;
   //ofstream f("rdata.txt");
@@ -326,7 +327,7 @@ void pf::particleFilterUpdate(
     // x'(t) =  x(t-1) (+) ut , where (+) is the pose compounding
     // operator which is simply the motion model
 
-    pmodel(xk[i], xk[i], (void*)&this->generator);   // xk ~ P(xk | xkm1): Hypothesis - State Transition Model
+    pmodel(xk[i], xk[i], Step, (void*)&this->generator);   // xk ~ P(xk | xkm1): Hypothesis - State Transition Model
     omodel(zk[i], xk[i], (void*)&this->generator);   // zk ~ P(zk | xk): Observation Model
 
     // update the weights based on likelihood function
@@ -450,8 +451,8 @@ double pf::getParticleState(std::vector<double> &x, std::vector<double> &z, uint
   {
     for(uint i = 0; i < Nx; ++i)
       x[i] = this->xk[pfidx][i];
-    for(uint i = 0; i < Nz; ++i)
-      z[i] = this->zk[pfidx][i];
+    //for(uint i = 0; i < Nz; ++i)
+    //  z[i] = this->zk[pfidx][i];
 
     return w[pfidx];
   }

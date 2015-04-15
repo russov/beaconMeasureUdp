@@ -9,13 +9,13 @@
 
 BdData::BdData(QObject *parent) : QObject(parent)
 {
-    dbase = QSqlDatabase::addDatabase("QSQLITE");
+  /*  dbase = QSqlDatabase::addDatabase("QSQLITE");
     dbase.setDatabaseName("../BeaconData");
 
     if (!dbase.open())
     {
         qDebug() << "BAD";
-    }
+    }*/
 /*
     QString request = "CREATE TABLE `DataBeacon` ("
             "`id`	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,"
@@ -49,14 +49,14 @@ BdData::BdData(QObject *parent) : QObject(parent)
 
 BdData::~BdData()
 {
-    dbase.close();
+  // dbase.close();
 }
 
 QList<BdData::NameBeacon> BdData::getBeacons()
 {
     QList < BdData::NameBeacon > names;
 
-    QSqlQuery query(dbase);
+    QSqlQuery query(ConnectDB::getDBase());
     QString request("select uuid, major, minor, name from tempbeacon ");
 
     qDebug() << request;
@@ -80,7 +80,7 @@ QList<BdData::NameCoordinatesBeacon> BdData::getBeaconsCoordinatesName()
 {
     QList < BdData::NameCoordinatesBeacon > names;
 
-    QSqlQuery query(dbase);
+    QSqlQuery query(ConnectDB::getDBase());
     QString request("select uuid, major, minor, name, x, y from tempbeacon ");
 
     qDebug() << request;
@@ -104,7 +104,7 @@ QList<BdData::NameCoordinatesBeacon> BdData::getBeaconsCoordinatesName()
 
 void BdData::updateCoordinateBeacon(const BdData::NameBeacon &name, int x, int y)
 {
-    QSqlQuery queryUpdate(dbase);
+    QSqlQuery queryUpdate(ConnectDB::getDBase());
     QString requestUpdate(QString("update TempBeacon "
                                   "set X = %1, Y = %2 "
                                   "where uuid = '%3' and major = '%4' and minor = '%5' and name = '%6' "
@@ -119,4 +119,27 @@ void BdData::updateCoordinateBeacon(const BdData::NameBeacon &name, int x, int y
     qDebug() << requestUpdate;
 
     queryUpdate.exec(requestUpdate);
+}
+
+int BdData::getTxPowerBeacon(const QString& uuid, const QString& major, const QString& minor, const QString& name)
+{
+    int txPower;
+
+    QSqlQuery query(ConnectDB::getDBase());
+    QString request(QString("select DISTINCT tx_power from databeacon "
+                    "where uuid = '%1' and major = '%2' and minor = '%3' and name = '%4' ")
+                    .arg(uuid)
+                    .arg(major)
+                    .arg(minor)
+                    .arg(name));
+
+    qDebug() << request;
+
+    query.exec(request);
+
+    while (query.next())
+    {
+        txPower = query.value(0).toInt();
+    }
+    return txPower;
 }

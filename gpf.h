@@ -58,10 +58,11 @@ namespace PF
     void initialize(uint k, const std::vector<double> &w, const std::vector<std::vector<double> > &x); //overloaded initialize function
 
     void particleFilterUpdate(
-        void (*pmodel)(std::vector<double> &x, const std::vector<double> &xprev, void* data), // Process Model 
+        void (*pmodel)(std::vector<double> &x, const std::vector<double> &xprev, const std::vector<double> &step, void* data), // Process Model
         void (*omodel)(std::vector<double> &z, const std::vector<double> &x, void* data), // Observation Model 
         double(*likelihood)(const std::vector<double> &z, const std::vector<double> &zhat, void *data),
          const std::vector<double> &z,   //Observation Model
+        const std::vector<double> &Step,
          uint resample_size = 0);  //default option: no resample
 
 /*    void pfupdate(

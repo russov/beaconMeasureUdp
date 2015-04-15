@@ -120,7 +120,7 @@ void MapControl::drawPoints()
     ui->imageLab->setPixmap(QPixmap::fromImage(image));
 }
 
-void MapControl::drawPoints(const std::vector<std::vector<double> > &Points, const std::vector<int> &size, const std::vector<Qt::GlobalColor> color)
+void MapControl::drawPoints(const std::vector<std::vector<double> > &Points, const std::vector<double> &size, const std::vector<Qt::GlobalColor> color)
 {
     drawPoints();
 
