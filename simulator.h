@@ -17,7 +17,7 @@ public:
     ~Simulator();
 
     void generateSimulatorData(QMap <QString, int> &beaconRssiAverage
-                               , const std::vector <std::pair<int, int> >& coordinatesBeacon
+                               , const QMap < QString, std::pair<int, int> >& coordinatesBeacon
                                , const std::pair <int, int>& coordinatesPoints);
 
 private:
