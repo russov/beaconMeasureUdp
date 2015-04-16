@@ -56,7 +56,7 @@ QList<BdData::NameBeacon> BdData::getBeacons()
 {
     QList < BdData::NameBeacon > names;
 
-    QSqlQuery query(ConnectDB::getDBase());
+    QSqlQuery query(ConnectDB::getInstance()->getDBase());
     QString request("select uuid, major, minor, name from tempbeacon ");
 
     qDebug() << request;
@@ -80,7 +80,7 @@ QList<BdData::NameCoordinatesBeacon> BdData::getBeaconsCoordinatesName()
 {
     QList < BdData::NameCoordinatesBeacon > names;
 
-    QSqlQuery query(ConnectDB::getDBase());
+    QSqlQuery query(ConnectDB::getInstance()->getDBase());
     QString request("select uuid, major, minor, name, x, y from tempbeacon ");
 
     qDebug() << request;
@@ -104,7 +104,7 @@ QList<BdData::NameCoordinatesBeacon> BdData::getBeaconsCoordinatesName()
 
 void BdData::updateCoordinateBeacon(const BdData::NameBeacon &name, int x, int y)
 {
-    QSqlQuery queryUpdate(ConnectDB::getDBase());
+    QSqlQuery queryUpdate(ConnectDB::getInstance()->getDBase());
     QString requestUpdate(QString("update TempBeacon "
                                   "set X = %1, Y = %2 "
                                   "where uuid = '%3' and major = '%4' and minor = '%5' and name = '%6' "
@@ -125,7 +125,7 @@ int BdData::getTxPowerBeacon(const QString& uuid, const QString& major, const QS
 {
     int txPower;
 
-    QSqlQuery query(ConnectDB::getDBase());
+    QSqlQuery query(ConnectDB::getInstance()->getDBase());
     QString request(QString("select DISTINCT tx_power from databeacon "
                     "where uuid = '%1' and major = '%2' and minor = '%3' and name = '%4' ")
                     .arg(uuid)

@@ -240,6 +240,23 @@ void BeaconData::onProcessTimer()
     deleteBeaconData(1000);
     beaconRssiAverage = calculateAverageRssi();
 
+   /* bool i = 0;
+    foreach (const QString& name, beaconInitData.keys())
+    {
+        int value = beaconRssiAverage.take(name);
+        if (name.contains("Kontakt"))
+        {
+            if (i == 0)
+            {
+                beaconRssiAverage.insert(name, -69);
+                i = true;
+            }
+            else
+                beaconRssiAverage.insert(name, -80);
+        }
+
+    }
+*/
     std::vector<double> Step;
     Step.push_back(0);
     Step.push_back(0);

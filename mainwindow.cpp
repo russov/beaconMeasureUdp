@@ -11,6 +11,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     data = new BeaconData(this);
+
+
 }
 
 MainWindow::~MainWindow()

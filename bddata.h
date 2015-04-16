@@ -10,23 +10,34 @@
 class ConnectDB : public QObject
 {
     Q_OBJECT
-public:
-    static QSqlDatabase getDBase()
+private:
+    static ConnectDB * p_instance;
+    QSqlDatabase dbase;
+    // Конструкторы и оператор присваивания недоступны клиентам
+    ConnectDB()
     {
-        QSqlDatabase dbase;
         dbase = QSqlDatabase::addDatabase("QSQLITE");
         dbase.setDatabaseName("../BeaconData");
 
         if (!dbase.open())
         {
-            //qDebug() << "BAD";
+
         }
-        return dbase;
     }
 
-    ~ConnectDB()
+    ConnectDB( const ConnectDB& );
+    ConnectDB& operator=( ConnectDB& );
+
+public:
+    static ConnectDB * getInstance()
     {
-        ConnectDB::getDBase().close();
+        static ConnectDB *p_instance = new ConnectDB();
+        return p_instance;
+    }
+
+    QSqlDatabase getDBase()
+    {
+        return dbase;
     }
 };
 
@@ -73,9 +84,6 @@ public:
     int getTxPowerBeacon(const QString& uuid, const QString& major, const QString& minor, const QString& name);
 
 protected:
-    //QSqlDatabase dbase;
-
-
 
 signals:
 

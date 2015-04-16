@@ -30,6 +30,19 @@
      <string>Find everage</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="startSimulatorPushButton">
+    <property name="geometry">
+     <rect>
+      <x>280</x>
+      <y>50</y>
+      <width>101</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>start simulator</string>
+    </property>
+   </widget>
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>

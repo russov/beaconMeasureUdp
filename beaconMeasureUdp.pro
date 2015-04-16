@@ -23,17 +23,20 @@ SOURCES += main.cpp\
     bddata.cpp \
     parsebeacondata.cpp \
     mapcontrol.cpp \
-    gpf.cpp
+    gpf.cpp \
+    simulator.cpp
 
 HEADERS  += mainwindow.h\
             beacondata.h \
     bddata.h \
     parsebeacondata.h \
     mapcontrol.h \
-    gpf.h
+    gpf.h \
+    simulator.h
 
 FORMS    += mainwindow.ui \
-    mapcontrol.ui
+    mapcontrol.ui \
+    simulator.ui
 
 CONFIG += mobility
 MOBILITY = 
