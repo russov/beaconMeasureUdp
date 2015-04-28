@@ -171,6 +171,38 @@ QMap<QString, int> BeaconData::calculateAverageRssi()
     return beaconRssiAverage;
 }
 
+double BeaconData::calculateHypothesis(int position)
+{
+    BdData *data = new BdData();
+
+   // QMap<QString, QVector<int> > rssiPosition = data->getRssiPosition(position);
+
+    double summ = 0;
+
+    foreach (const QString& nameBeacon, actualDataBeacons.keys())
+    {
+        if (actualDataBeacons.value(nameBeacon).isEmpty())
+            continue;
+
+        TimeAndDataBeacon beacon = actualDataBeacons.value(nameBeacon).first();
+
+        QMap<QString, QVector<int> > rssiPosition = data->getRssiPosition(position
+                                                                          , beacon.dataBeacon.value("uuid")
+                                                                          , beacon.dataBeacon.value("major")
+                                                                          , beacon.dataBeacon.value("minor")
+                                                                          , beacon.dataBeacon.value("name"));
+        if (!rssiPosition.value(nameBeacon).isEmpty())
+        {
+            int count =  rssiPosition.value(nameBeacon).count();
+            foreach (const TimeAndDataBeacon& beacon, actualDataBeacons.value(nameBeacon))
+                summ += (double)rssiPosition.value(nameBeacon).count(beacon.dataBeacon.value("rssi").toDouble()) / count;
+        }
+    }
+
+    delete data;
+    return summ;
+}
+
 QString BeaconData::getUniqNameBeacon(const QMap<QString, QString> &partsBeaconData)
 {
     return partsBeaconData["uuid"] + partsBeaconData["major"]
@@ -228,9 +260,9 @@ void BeaconData::readPendingDatagrams()
         udpSocket->readDatagram(datagram.data(), datagram.size(),
                                 &sender, &senderPort);
 
-        qDebug() << QString(datagram);
+       // qDebug() << QString(datagram);
 
-        qDebug() << countPocket;
+      //  qDebug() << countPocket;
         ++countPocket;
 
         processTheDatagram(datagram);
@@ -241,6 +273,11 @@ void BeaconData::onProcessTimer()
 {
     deleteBeaconData(1000);
     beaconRssiAverage = calculateAverageRssi();
+
+    double hypothesis = calculateHypothesis(1);
+
+
+    qDebug() << QString::number(hypothesis);
 
 /*
     Simulator *simulator = new Simulator();
@@ -279,7 +316,6 @@ void BeaconData::onProcessTimer()
     Step.push_back(0);
     Step.push_back(0);
 
-
     ParticleFilter->particleFilterUpdate(process,
                                          observation,
                                          likelihood,
@@ -292,9 +328,6 @@ void BeaconData::onProcessTimer()
         wt[i] = ParticleFilter->getParticleState(xd[i], xd[i], i)*500;
     }
 
-
-
-
     map->clear();
     map->drawPoints(xd, wt);
 
@@ -302,7 +335,6 @@ void BeaconData::onProcessTimer()
     Position.resize(2);
     ParticleFilter->filterOutput(Position);
     map->drawPoint(Position, 30, Qt::darkGreen);
-
 
 }
 

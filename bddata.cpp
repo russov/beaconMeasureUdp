@@ -59,7 +59,7 @@ QList<BdData::NameBeacon> BdData::getBeacons()
     QSqlQuery query(ConnectDB::getInstance()->getDBase());
     QString request("select uuid, major, minor, name from tempbeacon ");
 
-    qDebug() << request;
+    //qDebug() << request;
 
     query.exec(request);
 
@@ -83,7 +83,7 @@ QList<BdData::NameCoordinatesBeacon> BdData::getBeaconsCoordinatesName()
     QSqlQuery query(ConnectDB::getInstance()->getDBase());
     QString request("select uuid, major, minor, name, x, y from tempbeacon ");
 
-    qDebug() << request;
+    //qDebug() << request;
 
     query.exec(request);
 
@@ -102,6 +102,54 @@ QList<BdData::NameCoordinatesBeacon> BdData::getBeaconsCoordinatesName()
     return names;
 }
 
+QMap<QString, QVector<int> > BdData::getRssiPosition(int position)
+{
+    QMap<QString, QVector<int> > rssiPosition;
+
+    QSqlQuery query(ConnectDB::getInstance()->getDBase());
+    QString request(QString("select uuid, major, minor, name, rssi from databeacon "
+                    "where sequence_number_position = %1")
+                    .arg(position));
+
+    //qDebug() << request;
+
+    query.exec(request);
+
+    while (query.next())
+    {
+        rssiPosition[query.value(0).toString() + query.value(1).toString()
+                + query.value(2).toString() + query.value(3).toString()].push_back(query.value(4).toInt());
+    }
+    return rssiPosition;
+}
+
+QMap<QString, QVector<int> > BdData::getRssiPosition(int position, const QString uuid, const QString major, const QString minor, const QString name)
+{
+    QMap<QString, QVector<int> > rssiPosition;
+
+    QSqlQuery query(ConnectDB::getInstance()->getDBase());
+
+    QString request(QString("select uuid, major, minor, name, rssi from databeacon "
+                            "where sequence_number_position = %1 and uuid = '%2' "
+                            "and major = '%3' and minor = '%4' and name = '%5' ")
+                    .arg(position)
+                    .arg(uuid)
+                    .arg(major)
+                    .arg(minor)
+                    .arg(name));
+
+    //qDebug() << request;
+
+    query.exec(request);
+
+    while (query.next())
+    {
+        rssiPosition[query.value(0).toString() + query.value(1).toString()
+                + query.value(2).toString() + query.value(3).toString()].push_back(query.value(4).toInt());
+    }
+    return rssiPosition;
+}
+
 void BdData::updateCoordinateBeacon(const BdData::NameBeacon &name, int x, int y)
 {
     QSqlQuery queryUpdate(ConnectDB::getInstance()->getDBase());
@@ -116,7 +164,7 @@ void BdData::updateCoordinateBeacon(const BdData::NameBeacon &name, int x, int y
                           .arg(name.minor)
                           .arg(name.name));
 
-    qDebug() << requestUpdate;
+    //qDebug() << requestUpdate;
 
     queryUpdate.exec(requestUpdate);
 }
@@ -133,7 +181,7 @@ int BdData::getTxPowerBeacon(const QString& uuid, const QString& major, const QS
                     .arg(minor)
                     .arg(name));
 
-    qDebug() << request;
+    //qDebug() << request;
 
     query.exec(request);
 

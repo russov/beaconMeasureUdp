@@ -30,6 +30,7 @@ protected:
     void initSocket();
     void processTheDatagram(const QByteArray &datagram);
     QMap <QString, int> calculateAverageRssi();
+    double calculateHypothesis(int position);
     QString getUniqNameBeacon(const QMap <QString, QString>& partsBeaconData);
 
     void deleteBeaconData(int capasityMs = 2000);
