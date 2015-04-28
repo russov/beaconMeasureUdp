@@ -14,6 +14,7 @@
 
 #include <bddata.h>
 #include "gpf.h"
+#include <math.h>
 
 
 class BeaconData : public QObject

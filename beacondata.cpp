@@ -7,6 +7,8 @@
 
 #include "gpf.h"
 
+#include "simulator.h"
+
 QMap<QString, int> beaconRssiAverage;
 
 struct Beacon
@@ -240,6 +242,22 @@ void BeaconData::onProcessTimer()
     deleteBeaconData(1000);
     beaconRssiAverage = calculateAverageRssi();
 
+/*
+    Simulator *simulator = new Simulator();
+
+    QMap < QString, std::pair<int, int> > coordinatesBeacon;
+
+    foreach (const QString& name, beaconInitData.keys())
+    {
+        coordinatesBeacon.insert(name, std::make_pair(beaconInitData.value(name).x, beaconInitData.value(name).y));
+        beaconRssiAverage.insert(name,0);
+    }
+
+
+  /*  simulator->generateSimulatorData(beaconRssiAverage
+                                     , coordinatesBeacon
+                                     , std::make_pair(184,257));
+*/
    /* bool i = 0;
     foreach (const QString& name, beaconInitData.keys())
     {
@@ -271,11 +289,20 @@ void BeaconData::onProcessTimer()
                                         );
     for(unsigned short i = 0; i < 200; ++i)
     {
-
         wt[i] = ParticleFilter->getParticleState(xd[i], xd[i], i)*500;
     }
+
+
+
+
     map->clear();
     map->drawPoints(xd, wt);
+
+    std::vector <double> Position;
+    Position.resize(2);
+    ParticleFilter->filterOutput(Position);
+    map->drawPoint(Position, 30, Qt::darkGreen);
+
 
 }
 
@@ -298,7 +325,8 @@ void process(std::vector<double> &xk, const std::vector<double> &xkm1, const std
 
 void observation(std::vector<double> &zk, const std::vector<double> &xk, void* data)
 {
-    double Likelihood = 0;
+    double Likelihood = 0.00000000001;
+    //double LikelihoodTest = 0;
     static const double Sigma_RSS = 7;
     static const double Scale = 0.00867952522255192878338278931751;
 
@@ -315,10 +343,19 @@ void observation(std::vector<double> &zk, const std::vector<double> &xk, void* d
         if( (fabs(RSS) > 0) && (beaconInitData[name].x != 0))
         {
             double RSS_0 = beaconInitData[name].P0;
-            double n = beaconInitData[name].n;
-            double d = sqrt(pow(xk[0] - beaconInitData[name].x,2) + pow(xk[1] - beaconInitData[name].y,2))*Scale;
+            //double RSS_0 = -59;
 
-            Likelihood += (exp(- pow((RSS - (RSS_0 - 10*n*log(d) ) ),2)/(2*Sigma_RSS*Sigma_RSS))/fabs(RSS));
+            double n = 1.5;//beaconInitData[name].n;
+            double d = sqrt(pow(xk[0] - beaconInitData[name].x,2) + pow(xk[1] - beaconInitData[name].y,2))*Scale;
+            //double dd = sqrt(pow(184 - beaconInitData[name].x,2) + pow(257 - beaconInitData[name].y,2))*Scale;
+
+
+            //double l= log(dd);
+            //double TT = RSS - (RSS_0 - 10*n*l );
+
+            Likelihood += (exp(- pow((RSS - (RSS_0 - 10*n*log10(d) ) ),2)/(2*Sigma_RSS*Sigma_RSS))/1/*fabs(RSS)*/);
+            //LikelihoodTest += (exp(- pow((RSS - (RSS_0 - 10*n*l ) ),2)/(2*Sigma_RSS*Sigma_RSS))/1/*fabs(RSS)*/);
+
 
         }
     }

@@ -138,6 +138,24 @@ void MapControl::drawPoints(const std::vector<std::vector<double> > &Points, con
     ui->imageLab->setPixmap(QPixmap::fromImage(image));
 }
 
+void MapControl::drawPoint(const std::vector<double> &Point, double size,
+                Qt::GlobalColor Color)
+{
+    QPainter painter;
+    QImage image(ui->imageLab->pixmap()->toImage());
+
+    painter.begin(&image);
+    painter.setPen( Color );
+    painter.setBrush(Color );
+    painter.drawEllipse(Point[0]-size/2, Point[1]-size/2, size, size);
+    painter.end();
+
+    ui->imageLab->setPixmap(QPixmap::fromImage(image));
+
+}
+
+
+
 void MapControl::clear()
 {
     drawPoints();

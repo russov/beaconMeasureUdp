@@ -26,6 +26,9 @@ public:
 
     void drawPoints(const std::vector<std::vector<double> > &Points, const std::vector<double> &size,
                     const std::vector<Qt::GlobalColor> color = std::vector<Qt::GlobalColor>(200, Qt::red));
+    void drawPoint(const std::vector<double> &Point, double size,
+                    Qt::GlobalColor Color);
+
     void clear();
 
 private:
