@@ -175,8 +175,6 @@ double BeaconData::calculateHypothesis(int position)
 {
     BdData *data = new BdData();
 
-   // QMap<QString, QVector<int> > rssiPosition = data->getRssiPosition(position);
-
     double summ = 0;
 
     foreach (const QString& nameBeacon, actualDataBeacons.keys())
@@ -184,20 +182,16 @@ double BeaconData::calculateHypothesis(int position)
         if (actualDataBeacons.value(nameBeacon).isEmpty())
             continue;
 
+        int beaconId = (data->getBeaconsId(position)).value(nameBeacon);
+        QMap <int, int> histogram = data->getHistogram(beaconId, position);
+        int countValue = data->getCountValue(beaconId, position);
+
         TimeAndDataBeacon beacon = actualDataBeacons.value(nameBeacon).first();
 
-        QMap<QString, QVector<int> > rssiPosition = data->getRssiPosition(position
-                                                                          , beacon.dataBeacon.value("uuid")
-                                                                          , beacon.dataBeacon.value("major")
-                                                                          , beacon.dataBeacon.value("minor")
-                                                                          , beacon.dataBeacon.value("name"));
-        if (!rssiPosition.value(nameBeacon).isEmpty())
-        {
-            int count =  rssiPosition.value(nameBeacon).count();
-            foreach (const TimeAndDataBeacon& beacon, actualDataBeacons.value(nameBeacon))
-                summ += (double)rssiPosition.value(nameBeacon).count(beacon.dataBeacon.value("rssi").toDouble()) / count;
-        }
+        summ += (double)histogram.value(beacon.dataBeacon.value("rssi").toInt()) / countValue;
     }
+
+    qDebug() << QString::number(summ);
 
     delete data;
     return summ;
@@ -260,7 +254,7 @@ void BeaconData::readPendingDatagrams()
         udpSocket->readDatagram(datagram.data(), datagram.size(),
                                 &sender, &senderPort);
 
-       // qDebug() << QString(datagram);
+      //  qDebug() << QString(datagram);
 
       //  qDebug() << countPocket;
         ++countPocket;
@@ -277,7 +271,7 @@ void BeaconData::onProcessTimer()
     double hypothesis = calculateHypothesis(1);
 
 
-    qDebug() << QString::number(hypothesis);
+    //qDebug() << QString::number(hypothesis);
 
 /*
     Simulator *simulator = new Simulator();

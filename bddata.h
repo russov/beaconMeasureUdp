@@ -84,6 +84,10 @@ public:
     QMap<QString, QVector<int> > getRssiPosition(int position, const QString uuid, const QString major,
                                                  const QString minor, const QString name);
 
+    QMap<QString, int> getBeaconsId(int position);
+    int getCountValue(int beaconId, int position);
+    QMap <int, int> getHistogram(int beaconId, int position);
+
     void updateCoordinateBeacon(const NameBeacon &name, int x, int y);
     int getTxPowerBeacon(const QString& uuid, const QString& major, const QString& minor, const QString& name);
 

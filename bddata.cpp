@@ -150,6 +150,74 @@ QMap<QString, QVector<int> > BdData::getRssiPosition(int position, const QString
     return rssiPosition;
 }
 
+QMap< QString, int > BdData::getBeaconsId(int position)
+{
+    QMap< QString, int > beacons;
+
+    QSqlQuery query(ConnectDB::getInstance()->getDBase());
+
+    QString request(QString("select id, uuid, major, minor, name from beacons "));
+
+    //qDebug() << request;
+
+    query.exec(request);
+
+    while (query.next())
+    {
+        beacons.insert(query.value(1).toString()
+                                    + query.value(2).toString()
+                                    + query.value(3).toString()
+                                    + query.value(4).toString()
+                                    , query.value(0).toInt());
+    }
+    return beacons;
+}
+
+int BdData::getCountValue(int beaconId, int position)
+{
+    int count = 0;
+
+    QSqlQuery query(ConnectDB::getInstance()->getDBase());
+
+    QString request(QString("select sum(count) from histogram "
+                            "where id_beacon = %1 and id_position = %2")
+                    .arg(beaconId)
+                    .arg(position));
+
+    //qDebug() << request;
+
+    query.exec(request);
+
+    while (query.next())
+    {
+        count = query.value(0).toInt();
+    }
+    return count;
+}
+
+QMap<int, int> BdData::getHistogram(int beaconId, int position)
+{
+    QMap <int, int> histogram;
+
+    QSqlQuery query(ConnectDB::getInstance()->getDBase());
+
+    QString request(QString("select rssi, count from histogram "
+                            "where id_beacon = %1 and id_position = %2")
+                    .arg(beaconId)
+                    .arg(position));
+
+    //qDebug() << request;
+
+    query.exec(request);
+
+    while (query.next())
+    {
+        histogram.insert(query.value(0).toInt(), query.value(1).toInt());
+    }
+    return histogram;
+}
+
+
 void BdData::updateCoordinateBeacon(const BdData::NameBeacon &name, int x, int y)
 {
     QSqlQuery queryUpdate(ConnectDB::getInstance()->getDBase());
