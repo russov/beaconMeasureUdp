@@ -6,6 +6,12 @@
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QComboBox>
 
+#define coordinateX0 129
+#define coordinateY0 177
+
+#define metrToPixel 114
+
+
 MapControl::MapControl(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::MapControl)
@@ -73,6 +79,10 @@ void MapControl::onCurrentIndexChanged(const QString &text)
     double gx = (double)lastPoint.rx() / size.width();
     double x = map->width() * gx;
 
+    double xMetr = double(x - coordinateX0) / metrToPixel;
+    double yMetr = double(y - coordinateY0) / metrToPixel;
+
+
     QStringList textList = text.split(" ");
 
     QString uuid = textList[0];
@@ -80,7 +90,7 @@ void MapControl::onCurrentIndexChanged(const QString &text)
     QString minor= textList[2];
     QString name = textList[3];
 
-    bd->updateCoordinateBeacon(BdData::NameBeacon(uuid, major, minor, name), x, y);
+    bd->updateCoordinateBeacon(BdData::NameBeacon(uuid, major, minor, name), xMetr, yMetr);
 
     /*
     if (beaconPoints.isEmpty())
@@ -113,7 +123,8 @@ void MapControl::drawPoints()
     painter.setBrush( Qt::green );
 
     foreach (const BdData::NameCoordinatesBeacon& var, bd->getBeaconsCoordinatesName())
-        painter.drawEllipse(var.x-25, var.y-25, 50, 50);
+        painter.drawEllipse((var.x * metrToPixel) + coordinateX0 - 25
+                            , (var.y * metrToPixel) + coordinateY0 - 25, 50, 50);
 
     painter.end();
 

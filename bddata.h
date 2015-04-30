@@ -73,8 +73,8 @@ public:
             : NameBeacon(u, maj, min, n), x(x1), y(y1)
         {}
 
-        int x;
-        int y;
+        double x;
+        double y;
     };
 
     QList < NameBeacon > getBeacons();
@@ -88,7 +88,7 @@ public:
     int getCountValue(int beaconId, int position);
     QMap <int, int> getHistogram(int beaconId, int position);
 
-    void updateCoordinateBeacon(const NameBeacon &name, int x, int y);
+    void updateCoordinateBeacon(const NameBeacon &name, double x, double y);
     int getTxPowerBeacon(const QString& uuid, const QString& major, const QString& minor, const QString& name);
 
 protected:

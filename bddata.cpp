@@ -94,8 +94,8 @@ QList<BdData::NameCoordinatesBeacon> BdData::getBeaconsCoordinatesName()
         beacon.major = query.value(1).toString();
         beacon.minor = query.value(2).toString();
         beacon.name = query.value(3).toString();
-        beacon.x = query.value(4).toInt();
-        beacon.y = query.value(5).toInt();
+        beacon.x = query.value(4).toDouble();
+        beacon.y = query.value(5).toDouble();
 
         names.append(beacon);
     }
@@ -218,7 +218,7 @@ QMap<int, int> BdData::getHistogram(int beaconId, int position)
 }
 
 
-void BdData::updateCoordinateBeacon(const BdData::NameBeacon &name, int x, int y)
+void BdData::updateCoordinateBeacon(const BdData::NameBeacon &name, double x, double y)
 {
     QSqlQuery queryUpdate(ConnectDB::getInstance()->getDBase());
     QString requestUpdate(QString("update TempBeacon "
