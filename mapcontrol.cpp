@@ -142,7 +142,8 @@ void MapControl::drawPoints(const std::vector<std::vector<double> > &Points, con
     for (int i = 0; i < 200; ++i)
     {
         painter.setPen( color[i] );
-        painter.drawEllipse(Points[i][0]-size[i]/2, Points[i][1]-size[i]/2, size[i], size[i]);
+        painter.drawEllipse(Points[i][0] * metrToPixel  + coordinateX0 - size[i]/2
+                , Points[i][1] * metrToPixel + coordinateY0 - size[i]/2, size[i], size[i]);
     }
     painter.end();
 
@@ -158,7 +159,8 @@ void MapControl::drawPoint(const std::vector<double> &Point, double size,
     painter.begin(&image);
     painter.setPen( Color );
     painter.setBrush(Color );
-    painter.drawEllipse(Point[0]-size/2, Point[1]-size/2, size, size);
+    painter.drawEllipse(Point[0] * metrToPixel  + coordinateX0-size/2
+            , Point[1] * metrToPixel + coordinateY0 - size/2, size, size);
     painter.end();
 
     ui->imageLab->setPixmap(QPixmap::fromImage(image));

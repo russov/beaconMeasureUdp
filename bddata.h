@@ -88,6 +88,10 @@ public:
     int getCountValue(int beaconId, int position);
     QMap <int, int> getHistogram(int beaconId, int position);
 
+    QPair <double, double> getCoordinatesPoint(int position);
+
+    QList<QString> getPocketBeaconData(int position);
+
     void updateCoordinateBeacon(const NameBeacon &name, double x, double y);
     int getTxPowerBeacon(const QString& uuid, const QString& major, const QString& minor, const QString& name);
 

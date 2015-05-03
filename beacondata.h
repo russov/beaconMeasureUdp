@@ -17,6 +17,7 @@
 #include <math.h>
 
 
+
 class BeaconData : public QObject
 {
     Q_OBJECT
@@ -26,14 +27,20 @@ public:
 
     void calculateEverage();
 
+
+
+    static double calculateHypothesis(int position);
+
 protected:
     void initSocket();
     void processTheDatagram(const QByteArray &datagram);
     QMap <QString, int> calculateAverageRssi();
-    double calculateHypothesis(int position);
+
     QString getUniqNameBeacon(const QMap <QString, QString>& partsBeaconData);
 
     void deleteBeaconData(int capasityMs = 2000);
+
+    QPair <double, double> kMeans(QMap <double, int> likelyhoodResult, int capasity = 4);
 
     QUdpSocket *udpSocket;
     MapControl *map;
@@ -41,20 +48,13 @@ protected:
     //BdData *bd;
     QTimer *timer;
 
+    QTimer *timerTest;
+
     PF::pf *ParticleFilter;
 
-    struct TimeAndDataBeacon
-    {
-        TimeAndDataBeacon()
-        {}
-        TimeAndDataBeacon(QDateTime t, const QMap <QString, QString>& d)
-            : time(t), dataBeacon(d)
-        {}
-        QDateTime time;
-        QMap <QString, QString> dataBeacon;
-    };
 
-    QMap <QString, QList <TimeAndDataBeacon> > actualDataBeacons;
+
+
 
     std::vector <double> wt;
     std::vector < std::vector<double> > xd;
@@ -64,6 +64,7 @@ signals:
 public slots:
     void readPendingDatagrams();
     void onProcessTimer();
+    void onProcessTimerTest();
 };
 
 void process(std::vector<double> &xk, const std::vector<double> &xkm1, const std::vector<double> &step, void* data);

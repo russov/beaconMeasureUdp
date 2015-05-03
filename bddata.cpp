@@ -152,23 +152,26 @@ QMap<QString, QVector<int> > BdData::getRssiPosition(int position, const QString
 
 QMap< QString, int > BdData::getBeaconsId(int position)
 {
-    QMap< QString, int > beacons;
+    static QMap< QString, int > beacons;
 
-    QSqlQuery query(ConnectDB::getInstance()->getDBase());
-
-    QString request(QString("select id, uuid, major, minor, name from beacons "));
-
-    //qDebug() << request;
-
-    query.exec(request);
-
-    while (query.next())
+    if (beacons.empty())
     {
-        beacons.insert(query.value(1).toString()
-                                    + query.value(2).toString()
-                                    + query.value(3).toString()
-                                    + query.value(4).toString()
-                                    , query.value(0).toInt());
+        QSqlQuery query(ConnectDB::getInstance()->getDBase());
+
+        QString request(QString("select id, uuid, major, minor, name from beacons "));
+
+        //qDebug() << request;
+
+        query.exec(request);
+
+        while (query.next())
+        {
+            beacons.insert(query.value(1).toString()
+                                        + query.value(2).toString()
+                                        + query.value(3).toString()
+                                        + query.value(4).toString()
+                                        , query.value(0).toInt());
+        }
     }
     return beacons;
 }
@@ -176,45 +179,115 @@ QMap< QString, int > BdData::getBeaconsId(int position)
 int BdData::getCountValue(int beaconId, int position)
 {
     int count = 0;
+    static QMap <QPair <int, int>, int > cacheCountValue;
 
-    QSqlQuery query(ConnectDB::getInstance()->getDBase());
-
-    QString request(QString("select sum(count) from histogram "
-                            "where id_beacon = %1 and id_position = %2")
-                    .arg(beaconId)
-                    .arg(position));
-
-    //qDebug() << request;
-
-    query.exec(request);
-
-    while (query.next())
+    if (cacheCountValue.find(qMakePair(beaconId, position)) == cacheCountValue.end() )
     {
-        count = query.value(0).toInt();
+        QSqlQuery query(ConnectDB::getInstance()->getDBase());
+
+        QString request(QString("select sum(count) from histogram "
+                                "where id_beacon = %1 and id_position = "
+                                "(select id from positions where num = %2)")
+                        .arg(beaconId)
+                        .arg(position));
+
+        //qDebug() << request;
+
+        query.exec(request);
+
+        while (query.next())
+        {
+            count = query.value(0).toInt();
+        }
+
+        cacheCountValue.insert(qMakePair(beaconId, position), count);
     }
-    return count;
+    return cacheCountValue.value(qMakePair(beaconId, position));
 }
 
 QMap<int, int> BdData::getHistogram(int beaconId, int position)
 {
     QMap <int, int> histogram;
+    static QMap <QPair <int, int>, QMap <int, int> > cacheHistogram;
+
+    if (cacheHistogram.find(qMakePair(beaconId, position)) == cacheHistogram.end() )
+    {
+        QSqlQuery query(ConnectDB::getInstance()->getDBase());
+
+        QString request(QString("select rssi, count from histogram "
+                                "where id_beacon = %1 and id_position "
+                                "= (select id from positions where num = %2)")
+                        .arg(beaconId)
+                        .arg(position));
+
+        //qDebug() << request;
+
+        query.exec(request);
+
+        while (query.next())
+            histogram.insert(query.value(0).toInt(), query.value(1).toInt());
+
+        cacheHistogram.insert(qMakePair(beaconId, position), histogram);
+    }
+    return cacheHistogram.value(qMakePair(beaconId, position));
+}
+
+QPair<double, double> BdData::getCoordinatesPoint(int position)
+{
+    QPair <double, double> coordinate;
+    static QMap <int, QPair <double, double> > cacheCoordinate;
+
+    if (cacheCoordinate.find(position) == cacheCoordinate.end())
+    {
+        QSqlQuery query(ConnectDB::getInstance()->getDBase());
+
+        QString request(QString("select x, y from positions "
+                                "where num = %1")
+                        .arg(position));
+
+        query.exec(request);
+
+        while (query.next())
+        {
+            coordinate = qMakePair (query.value(0).toDouble(), query.value(1).toDouble());
+        }
+        cacheCoordinate.insert(position, coordinate);
+    }
+    return cacheCoordinate.value(position);
+}
+
+QList < QString > BdData::getPocketBeaconData(int position)
+{
+    QList < QString > pocketBeaconData;
 
     QSqlQuery query(ConnectDB::getInstance()->getDBase());
 
-    QString request(QString("select rssi, count from histogram "
-                            "where id_beacon = %1 and id_position = %2")
-                    .arg(beaconId)
+    QString request(QString("select time_measure, uuid, major, minor, tx_power, "
+                            "rssi, sequence_number_pocket, sequence_number_position,"
+                            "name "
+                            "from databeacon "
+                            "where sequence_number_position = %1")
                     .arg(position));
-
-    //qDebug() << request;
 
     query.exec(request);
 
+    qDebug() << request;
+
     while (query.next())
     {
-        histogram.insert(query.value(0).toInt(), query.value(1).toInt());
+        pocketBeaconData.push_back(
+                    query.value(0).toString() + ";"
+                    + query.value(1).toString() + ";"
+                    + query.value(2).toString() + ";"
+                    + query.value(3).toString() + ";"
+                    + query.value(4).toString() + ";"
+                    + query.value(5).toString() + ";"
+                    + query.value(6).toString() + ";"
+                    + query.value(7).toString() + ";"
+                    + query.value(8).toString() + ";"
+                    + "0");
     }
-    return histogram;
+    return pocketBeaconData;
 }
 
 

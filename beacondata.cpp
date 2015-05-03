@@ -21,6 +21,19 @@ struct Beacon
 
 QMap<QString, Beacon> beaconInitData;
 
+struct TimeAndDataBeacon
+{
+    TimeAndDataBeacon()
+    {}
+    TimeAndDataBeacon(QDateTime t, const QMap <QString, QString>& d)
+        : time(t), dataBeacon(d)
+    {}
+    QDateTime time;
+    QMap <QString, QString> dataBeacon;
+};
+
+QMap <QString, QList <TimeAndDataBeacon> > actualDataBeacons;
+
 BeaconData::BeaconData(QObject *parent)
     : QObject(parent), udpSocket(NULL)
 {
@@ -33,6 +46,10 @@ BeaconData::BeaconData(QObject *parent)
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), SLOT(onProcessTimer()));
     timer->start(500);
+
+    timerTest = new QTimer(this);
+    connect(timerTest, SIGNAL(timeout()), SLOT(onProcessTimerTest()));
+   // timerTest->start(2000);
 
     ParticleFilter = new PF::pf(200, 2, 1, PF::WRSWR);
 
@@ -48,10 +65,10 @@ BeaconData::BeaconData(QObject *parent)
     for (int i=0; i<200; ++i)
     {
        double number = distribution1(generator1);
-       xd[i][0] = 127 + (1475-127)*number;
+       xd[i][0] = 11.74 * number;
 
        number = distribution2(generator1);
-       xd[i][1] = 173 + (1293-173)*number;
+       xd[i][1] = 9.42 * number;
 
        wt.push_back(1/200.0);
 
@@ -60,27 +77,6 @@ BeaconData::BeaconData(QObject *parent)
        color.push_back(Qt::red);
        //!!!!!
     }
-//    Constant	Value	Description
-//    Qt::white	3	White (#ffffff)
-//    Qt::black	2	Black (#000000)
-//    Qt::red	7	Red (#ff0000)
-//    Qt::darkRed	13	Dark red (#800000)
-//    Qt::green	8	Green (#00ff00)
-//    Qt::darkGreen	14	Dark green (#008000)
-//    Qt::blue	9	Blue (#0000ff)
-//    Qt::darkBlue	15	Dark blue (#000080)
-//    Qt::cyan	10	Cyan (#00ffff)
-//    Qt::darkCyan	16	Dark cyan (#008080)
-//    Qt::magenta	11	Magenta (#ff00ff)
-//    Qt::darkMagenta	17	Dark magenta (#800080)
-//    Qt::yellow	12	Yellow (#ffff00)
-//    Qt::darkYellow	18	Dark yellow (#808000)
-//    Qt::gray	5	Gray (#a0a0a4)
-//    Qt::darkGray	4	Dark gray (#808080)
-//    Qt::lightGray	6	Light gray (#c0c0c0)
-//    Qt::transparent	19	a transparent black value (i.e., QColor(0, 0, 0, 0))
-//    Qt::color0	0	0 pixel value (for bitmaps)
-//    Qt::color1	1	1 pixel value (for bitmaps)
 
     // map->setXD(xd);
     // map->drawPoints();
@@ -171,32 +167,6 @@ QMap<QString, int> BeaconData::calculateAverageRssi()
     return beaconRssiAverage;
 }
 
-double BeaconData::calculateHypothesis(int position)
-{
-    BdData *data = new BdData();
-
-    double summ = 0;
-
-    foreach (const QString& nameBeacon, actualDataBeacons.keys())
-    {
-        if (actualDataBeacons.value(nameBeacon).isEmpty())
-            continue;
-
-        int beaconId = (data->getBeaconsId(position)).value(nameBeacon);
-        QMap <int, int> histogram = data->getHistogram(beaconId, position);
-        int countValue = data->getCountValue(beaconId, position);
-
-        TimeAndDataBeacon beacon = actualDataBeacons.value(nameBeacon).first();
-
-        summ += (double)histogram.value(beacon.dataBeacon.value("rssi").toInt()) / countValue;
-    }
-
-    qDebug() << QString::number(summ);
-
-    delete data;
-    return summ;
-}
-
 QString BeaconData::getUniqNameBeacon(const QMap<QString, QString> &partsBeaconData)
 {
     return partsBeaconData["uuid"] + partsBeaconData["major"]
@@ -241,6 +211,35 @@ void BeaconData::deleteBeaconData(int capasityMs)
     }
 }
 
+QPair<double, double> BeaconData::kMeans(QMap<double, int> likelyhoodResult, int capasity)
+{
+    BdData *data = new BdData();
+    double numeratorX = 0;
+    double numeratorY = 0;
+    double denumerator = 0;
+
+    if (likelyhoodResult.count() != 1 )
+        for (QMap<double, int>::iterator iter = likelyhoodResult.end() - 1
+             ; iter != likelyhoodResult.end() - capasity - 1
+             ; --iter)
+        {
+            QPair<double, double> coord = data->getCoordinatesPoint(iter.value());
+
+            numeratorX += iter.key() * coord.first;
+            numeratorY += iter.key() * coord.second;
+
+            denumerator += iter.key();
+        }
+    else
+    {
+        delete data;
+        return QPair<double, double> ();
+    }
+    delete data;
+
+    return qMakePair (numeratorX/denumerator, numeratorY/denumerator);
+}
+
 void BeaconData::readPendingDatagrams()
 {
     static int countPocket = 1;
@@ -265,13 +264,8 @@ void BeaconData::readPendingDatagrams()
 
 void BeaconData::onProcessTimer()
 {
-    deleteBeaconData(1000);
-    beaconRssiAverage = calculateAverageRssi();
-
-    double hypothesis = calculateHypothesis(1);
-
-
-    //qDebug() << QString::number(hypothesis);
+    deleteBeaconData(2000);
+    //beaconRssiAverage = calculateAverageRssi();
 
 /*
     Simulator *simulator = new Simulator();
@@ -317,6 +311,7 @@ void BeaconData::onProcessTimer()
                                          Step,
                                          round(200*0.60)
                                         );
+
     for(unsigned short i = 0; i < 200; ++i)
     {
         wt[i] = ParticleFilter->getParticleState(xd[i], xd[i], i)*500;
@@ -330,6 +325,106 @@ void BeaconData::onProcessTimer()
     ParticleFilter->filterOutput(Position);
     map->drawPoint(Position, 30, Qt::darkGreen);
 
+
+    /*QMap <double, int> likelyhoodResult;
+
+
+    for (int i = 1; i <= 24; ++i)
+    {
+        likelyhoodResult.insert(calculateHypothesis(i), i);
+
+
+    }
+
+  //  foreach (double arg, likelyhoodResult.keys())
+    //{
+        double arg = likelyhoodResult.lastKey();
+
+        qDebug() << QString::number(arg) << " -- " << QString::number(likelyhoodResult.value(arg));
+    //}
+
+
+
+
+
+        std::vector <double> coord;
+
+        BdData *data = new BdData();
+        QPair <double, double> coordinatePoint = kMeans(likelyhoodResult);//data->getCoordinatesPoint(likelyhoodResult.value(arg));
+        delete data;
+
+        coord.push_back(coordinatePoint.first);
+        coord.push_back(coordinatePoint.second);
+        map->clear();
+        map->drawPoint(coord, 50, Qt::blue);
+*/
+
+
+
+}
+
+double BeaconData::calculateHypothesis(int position)
+{
+    BdData *data = new BdData();
+
+    double summ = 0;
+
+    foreach (const QString& nameBeacon, actualDataBeacons.keys())
+    {
+        if (actualDataBeacons.value(nameBeacon).isEmpty())
+            continue;
+
+        int beaconId = (data->getBeaconsId(position)).value(nameBeacon);
+        QMap <int, int> histogram = data->getHistogram(beaconId, position);
+        int countValue = data->getCountValue(beaconId, position);
+
+        //TimeAndDataBeacon beacon;
+        foreach (const TimeAndDataBeacon &arg, actualDataBeacons.value(nameBeacon))
+        {
+            summ += (double)histogram.value(arg.dataBeacon.value("rssi").toInt()) / countValue;
+        }
+    }
+
+   //qDebug() << QString::number(summ);
+
+    delete data;
+    return summ;
+}
+
+void BeaconData::onProcessTimerTest()
+{
+    BdData *data = new BdData();
+
+    QByteArray utf8;
+
+    foreach (const QString & arg, data->getPocketBeaconData(1))
+    {
+        utf8.append(arg);
+        processTheDatagram (utf8);
+        utf8.clear();
+    }
+    delete data;
+
+timerTest->stop();
+
+
+  /*  time_measure, uuid, major, minor, tx_power, "
+                                "rssi, sequence_number_pocket, sequence_number_position,"
+                                "name "
+
+    */
+
+
+//    QUdpSocket *udpSocketSend = new QUdpSocket(this);
+
+//                    QHostAddress *bcast = new QHostAddress("127.0.0.1");
+
+//                    udpSocketSend->connectToHost(*bcast,12345);
+
+//                    QByteArray *datagram = QByteArray(strData); // data from external function
+//                    udpSocketSend->write(*datagram);
+
+//    delete data;
 }
 
 
@@ -337,7 +432,7 @@ void BeaconData::onProcessTimer()
 
 void process(std::vector<double> &xk, const std::vector<double> &xkm1, const std::vector<double> &step, void* data)
 {
-    static double StepInaccuracy = 10;  //Check
+    static double StepInaccuracy = 0.5;  //Check
     std::default_random_engine *generator = (std::default_random_engine *)data;
     std::normal_distribution<double> distribution(0.0, StepInaccuracy);
 
@@ -349,42 +444,70 @@ void process(std::vector<double> &xk, const std::vector<double> &xkm1, const std
 }
 
 
+//void observation(std::vector<double> &zk, const std::vector<double> &xk, void* data)
+//{
+//    double Likelihood = 0.00000000001;
+//    //double LikelihoodTest = 0;
+//    static const double Sigma_RSS = 7;
+//    static const double Scale = 0.00867952522255192878338278931751;
+
+////    for(unsigned short i = 0; i<beaconRssiAverage.size(); ++i)
+////    {
+////        if(beaconRssiAverage.)
+////    }
+
+//    foreach (const QString &name, beaconRssiAverage.keys())
+//    {
+
+//        double RSS = beaconRssiAverage[name];
+
+//        if( (fabs(RSS) > 0) && (beaconInitData[name].x != 0))
+//        {
+//            double RSS_0 = beaconInitData[name].P0;
+//            //double RSS_0 = -59;
+
+//            double n = 1.5;//beaconInitData[name].n;
+//            double d = sqrt(pow(xk[0] - beaconInitData[name].x,2) + pow(xk[1] - beaconInitData[name].y,2))*Scale;
+//            //double dd = sqrt(pow(184 - beaconInitData[name].x,2) + pow(257 - beaconInitData[name].y,2))*Scale;
+
+
+//            //double l= log(dd);
+//            //double TT = RSS - (RSS_0 - 10*n*l );
+
+//            Likelihood += (exp(- pow((RSS - (RSS_0 - 10*n*log10(d) ) ),2)/(2*Sigma_RSS*Sigma_RSS))/1/*fabs(RSS)*/);
+//            //LikelihoodTest += (exp(- pow((RSS - (RSS_0 - 10*n*l ) ),2)/(2*Sigma_RSS*Sigma_RSS))/1/*fabs(RSS)*/);
+
+
+//        }
+//    }
+//    zk[0] = Likelihood;
+
+//}
+
+
 void observation(std::vector<double> &zk, const std::vector<double> &xk, void* data)
 {
+    Q_UNUSED(data);
+
     double Likelihood = 0.00000000001;
-    //double LikelihoodTest = 0;
-    static const double Sigma_RSS = 7;
-    static const double Scale = 0.00867952522255192878338278931751;
 
-//    for(unsigned short i = 0; i<beaconRssiAverage.size(); ++i)
-//    {
-//        if(beaconRssiAverage.)
-//    }
+    static double delta = 0.5;
 
-    foreach (const QString &name, beaconRssiAverage.keys())
+    BdData *data1 = new BdData();
+
+    for (int i = 1; i <= 3; ++i)
     {
-
-        double RSS = beaconRssiAverage[name];
-
-        if( (fabs(RSS) > 0) && (beaconInitData[name].x != 0))
+        if ((fabs(xk[0] - data1->getCoordinatesPoint(i).first) < delta)
+                && (fabs(xk[1] - data1->getCoordinatesPoint(i).second) < delta))
         {
-            double RSS_0 = beaconInitData[name].P0;
-            //double RSS_0 = -59;
-
-            double n = 1.5;//beaconInitData[name].n;
-            double d = sqrt(pow(xk[0] - beaconInitData[name].x,2) + pow(xk[1] - beaconInitData[name].y,2))*Scale;
-            //double dd = sqrt(pow(184 - beaconInitData[name].x,2) + pow(257 - beaconInitData[name].y,2))*Scale;
-
-
-            //double l= log(dd);
-            //double TT = RSS - (RSS_0 - 10*n*l );
-
-            Likelihood += (exp(- pow((RSS - (RSS_0 - 10*n*log10(d) ) ),2)/(2*Sigma_RSS*Sigma_RSS))/1/*fabs(RSS)*/);
-            //LikelihoodTest += (exp(- pow((RSS - (RSS_0 - 10*n*l ) ),2)/(2*Sigma_RSS*Sigma_RSS))/1/*fabs(RSS)*/);
-
-
+            Likelihood = BeaconData::calculateHypothesis(i);
+            break;
         }
     }
+
+
+    delete data1;
+
     zk[0] = Likelihood;
 
 }
